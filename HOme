@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GiftGenie — People & Occasions</title>
+<meta name="description" content="Add people, log occasions (one-time or recurring), set reminders and email alerts, and manage gifting details.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#f56960">
+<style>
+  :root{
+    /* Your palette */
+    --aqua:#9cf6f6; --sand:#f3c98b; --clay:#daa588; --terra:#c46d5e; --coral:#f56960;
+
+    /* UI tokens */
+    --bg:#fffdfb; --card:#ffffff; --ink:#2a2622; --muted:#6b625a; --line:#eee7df;
+    --brand: var(--coral); --brand-2: var(--terra);
+    --radius:14px; --shadow:0 6px 18px rgba(56,40,24,.08); --maxw:1100px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--ink)}
+  a{text-decoration:none;color:inherit}
+
+  /* NAVBAR */
+  .navbar{background:#fff;box-shadow:var(--shadow);position:sticky;top:0;z-index:1000}
+  .navwrap{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.25rem;gap:.75rem;flex-wrap:wrap}
+  .brand{font-weight:800;font-size:1.2rem;color:var(--brand)}
+  .nav-links{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+  .nav-links a{padding:.45rem .75rem;border-radius:8px;font-weight:600;color:var(--ink)}
+  .nav-links a:hover{background:var(--aqua)}
+  .nav-links .signup{background:var(--brand);color:#fff}
+  .nav-links .signup:hover{background:var(--brand-2)}
+  .install-btn{background:#0f766e;color:#fff;padding:.45rem .75rem;border-radius:8px;font-weight:700;display:none}
+
+  /* SETTINGS STRIP */
+  .settings{background:#fff; border-bottom:1px solid var(--line);}
+  .settings .inner{max-width:var(--maxw);margin:0 auto;padding:.6rem 1.25rem;display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+  .settings input{padding:.55rem .7rem;border:1px solid var(--line);border-radius:9px}
+
+  /* HERO (new warmer photo) */
+  header{
+    background:
+      linear-gradient(0deg, rgba(255,255,255,.0), rgba(255,255,255,.92)),
+      url('https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
+    border-bottom:1px solid var(--line)
+  }
+  .hero{max-width:var(--maxw);margin:0 auto;padding:clamp(2rem,6vw,5rem) 1.25rem;color:#3a2f25}
+  .hero h1{margin:0 0 .5rem;font-size:clamp(1.9rem,3.2vw,3rem);text-shadow:0 1px 14px rgba(255,255,255,.9)}
+  .hero p{margin:0;max-width:48rem;color:#4b3f36;text-shadow:0 1px 10px rgba(255,255,255,.9)}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:1.25rem}
+  .surface{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .section-title{font-size:1.1rem;margin:0 0 .75rem}
+
+  label{display:block;font-weight:700;margin:0 0 .35rem}
+  input,select,textarea{width:100%;padding:.7rem .85rem;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit}
+  textarea{min-height:90px;resize:vertical}
+
+  .grid{display:grid;gap:1rem;grid-template-columns:repeat(12,1fr)}
+  .col-3{grid-column:span 3}.col-4{grid-column:span 4}.col-6{grid-column:span 6}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
+  @media (max-width:860px){ .col-3,.col-4,.col-6,.col-8{grid-column:span 12} }
+
+  .actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem}
+  button{border:0;padding:.8rem 1rem;border-radius:10px;cursor:pointer;font-weight:700}
+  .btn-primary{background:var(--brand);color:#fff}.btn-primary:hover{background:var(--brand-2)}
+  .btn-secondary{background:#fff7f3;color:#3a2f25;border:1px solid #ffd9cd}
+  .btn-danger{background:#fff0ee;color:#8a1b1b;border:1px solid #ffd0cb}
+  .btn-mini{padding:.35rem .6rem;font-size:.9rem}
+
+  /* Steps */
+  .stepper{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+  .pill{padding:.4rem .7rem;border:1px solid var(--line);border-radius:999px;background:#fff7f0}
+  .pill.active{background:#ffe8de;border-color:#ffd5c9}
+
+  /* Lists */
+  .list .row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:.75rem;align-items:center;padding:.9rem;border-top:1px solid var(--line)}
+  .list .row:first-child{border-top:0}
+  .badge{display:inline-flex;align-items:center;gap:.45rem;padding:.25rem .55rem;border-radius:999px;background:#fff6ee;border:1px solid var(--line);font-size:.8rem;color:#4a3a2b}
+  .dot{width:.6rem;height:.6rem;border-radius:50%}
+  .empty{padding:1rem;color:var(--muted)}
+
+  /* Chips */
+  .chips{display:flex;flex-wrap:wrap;gap:.5rem}
+  .chip{padding:.45rem .7rem;border:1px solid var(--line);border-radius:999px;background:#f9f4ee;cursor:pointer;user-select:none}
+  .chip.active{background:#fff0ea;border-color:#ffd5c9}
+
+  /* Dashboard view */
+  .two-col{display:grid;grid-template-columns: 1.2fr 1fr; gap:1rem}
+  @media (max-width:960px){ .two-col{grid-template-columns:1fr} }
+
+  /* Error bar */
+  #errbar{position:fixed;left:0;right:0;bottom:0;background:#3b0d0d;color:#fff;padding:.6rem .9rem;font-size:.9rem;display:none;z-index:9999}
+</style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navwrap">
+      <div class="brand">GiftGenie</div>
+      <div class="nav-links">
+        <a href="#">Home</a>
+        <a href="#">Gift Guide</a>
+        <a href="#">FAQs</a>
+        <a href="#">Login</a>
+        <a href="#" class="signup">Sign Up</a>
+        <button id="installBtn" class="install-btn">Install App</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- SETTINGS STRIP -->
+  <div class="settings">
+    <div class="inner">
+      <strong>Settings:</strong>
+      <label>Email for reminders <input id="userEmail" placeholder="you@example.com" style="min-width:220px;"></label>
+      <label style="display:none;">Backend URL <input id="backendUrl" placeholder="https://your-backend.example/send-reminder" style="min-width:320px;"></label>
+      <button id="saveSettings" class="btn-secondary btn-mini">Save</button>
+      <span id="saveSettingsNote" class="empty" style="padding:0;margin-left:.5rem;"></span>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <header>
+    <div class="hero">
+      <h1>Your people. Their occasions. All in one place.</h1>
+      <p>Add names and ages, log the occasions (one-time or recurring), set reminders (choose days-before), then add <strong>Additional Details</strong>. Open a person to view their dashboard and (soon) gift recommendations.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- ===== Editor / Wizard (Home) ===== -->
+    <section id="editorSection" class="surface" style="padding:1.25rem;margin-bottom:1rem;">
+      <div class="section-title">Add / Edit Person</div>
+      <div class="stepper">
+        <span class="pill active" id="pill-basic">1 • Basic</span>
+        <span class="pill" id="pill-occ">2 • Occasions</span>
+        <span class="pill" id="pill-details">3 • Additional Details</span>
+      </div>
+
+      <!-- STEP 1: BASIC -->
+      <div id="step-basic">
+        <div class="grid">
+          <div class="col-6">
+            <label for="name">Name</label>
+            <input id="name" placeholder="e.g., Kirsten"/>
+          </div>
+          <div class="col-6">
+            <label for="age">Age</label>
+            <input id="age" type="number" min="1" max="120" placeholder="e.g., 30"/>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn-primary" id="toOccBtn">Continue to Occasions →</button>
+          <button class="btn-secondary" id="resetBasic">Reset</button>
+          <span style="flex:1"></span>
+          <button class="btn-secondary" id="newPersonBtn">+ Add Another Person</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: OCCASIONS -->
+      <div id="step-occ" style="display:none;">
+        <div class="grid" style="align-items:end">
+          <div class="col-3">
+            <label for="occType">Occasion</label>
+            <select id="occType">
+              <option>Birthday</option><option>Anniversary</option><option>Christmas</option>
+              <option>Graduation</option><option>Valentine’s Day</option><option>Other</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <label for="occDate">Date</label>
+            <input id="occDate" type="date"/>
+          </div>
+          <div class="col-3">
+            <label>Repeats?</label>
+            <select id="occRepeat">
+              <option value="recurring" selected>Recurring annually</option>
+              <option value="once">One-time only</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <label>Reminders</label>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap:.5rem;">
+              <label style="display:flex;align-items:center;gap:.5rem;">
+                <input id="occRemOn" type="checkbox" style="width:auto;" checked/>
+                Local
+              </label>
+              <input id="occRemDays" type="number" min="0" max="365" value="14" title="Days before"/>
+              <label style="display:flex;align-items:center;gap:.5rem;">
+                <input id="occRemEmailOn" type="checkbox" style="width:auto;"/>
+                Email
+              </label>
+              <input id="occRemEmailDays" type="number" min="0" max="365" value="14" title="Days before (email)"/>
+            </div>
+          </div>
+          <div class="col-12">
+            <button class="btn-secondary" id="addOcc">+ Add Occasion</button>
+            <span class="empty" style="display:inline-block;margin-left:.5rem;">Tip: birthdays/anniversaries recur yearly; set reminders per occasion.</span>
+          </div>
+        </div>
+
+        <div class="list surface" id="occList" style="margin-top:1rem;padding:.25rem 0;"></div>
+
+        <div class="actions">
+          <button class="btn-primary" id="toDetailsBtn">Continue to Additional Details →</button>
+          <button class="btn-secondary" id="backToBasic">← Back</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: ADDITIONAL DETAILS -->
+      <div id="step-details" style="display:none;">
+        <div class="grid">
+          <div class="col-4">
+            <label for="budget">Budget ($)</label>
+            <input id="budget" type="number" min="0" placeholder="e.g., 100"/>
+          </div>
+          <div class="col-8">
+            <label>Hobbies / Interests</label>
+            <div class="chips" id="interestChips"></div>
+            <input id="interestsFree" placeholder="Add any extras (comma-separated)" style="margin-top:.5rem;">
+          </div>
+          <div class="col-6">
+            <label for="location">City, State</label>
+            <input id="location" placeholder="e.g., Hingham, MA"/>
+          </div>
+          <div class="col-6">
+            <label for="address">Address <span style="color:#a00;">(required)</span></label>
+            <input id="address" placeholder="Street address" />
+          </div>
+          <div class="col-12">
+            <label for="notes">Notes</label>
+            <textarea id="notes" placeholder="Sizes, favorite brands, allergies, etc."></textarea>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:1rem;">Their Occasions</div>
+        <div class="list surface" id="occListDetails" style="margin-top:.25rem;padding:.25rem 0;"></div>
+
+        <div class="actions">
+          <button class="btn-primary" id="savePerson">Save Person</button>
+          <button class="btn-secondary" id="backToOcc">← Back</button>
+          <button class="btn-danger" id="deletePerson" style="margin-left:auto;display:none;">Delete</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PEOPLE LIST -->
+    <section id="peopleSection" class="surface" style="padding:1.25rem;">
+      <div class="section-title">All People</div>
+      <div id="peopleList" class="list"></div>
+    </section>
+
+    <!-- ===== Person Dashboard (view mode) ===== -->
+    <section id="personDash" class="surface" style="padding:1.25rem; display:none;">
+      <div class="actions" style="margin-bottom:.5rem;">
+        <button class="btn-secondary" id="dashBackBtn">← Back to Home</button>
+        <button class="btn-primary" id="dashEditBtn">Edit</button>
+        <button class="btn-danger" id="dashDeleteBtn" style="margin-left:auto;">Delete</button>
+      </div>
+
+      <div id="dashHeader" class="section-title"></div>
+
+      <div class="two-col">
+        <div>
+          <div class="section-title" style="margin-top:.25rem;">Person Info</div>
+          <div id="dashInfo" class="list" style="padding:.25rem 0;"></div>
+
+          <div class="section-title" style="margin-top:1rem;">Occasions</div>
+          <div id="dashOcc" class="list" style="padding:.25rem 0;"></div>
+        </div>
+
+        <div>
+          <div class="section-title">Gift Recommendations</div>
+          <div class="surface" style="padding:1rem;">
+            <div id="dashNextOcc" class="muted" style="margin-bottom:.5rem;"></div>
+            <div id="dashRecs">
+              <!-- Placeholder now; shows samples by interest until API integration -->
+              <div class="empty">Recommendations coming soon — showing sample ideas by interests for now.</div>
+              <div id="sampleIdeas"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap" style="text-align:center;color:var(--muted);padding:2rem 0;">
+    © <span id="year"></span> GiftGenie — basics first, ideas next.
+  </footer>
+
+  <div id="errbar"></div>
+
+<script>
+/* ================= Constants & Sample Ideas ================= */
+const STORAGE_KEY='giftgenie:people.v5';
+const SETTINGS_KEY='giftgenie:settings.v1';
+const REMINDERS_KEY='giftgenie:remindersFired';
+const INTEREST_PRESETS = [
+  "Tech","Fitness","Cooking","Coffee","Outdoors",
+  "Travel","Books","Music","Home Decor","Beauty/Skincare"
+];
+const SAMPLE_IDEAS = {
+  "Tech": ["MagSafe power bank","Noise-canceling earbuds","Smart speaker","Smartwatch","Tablet (entry)"],
+  "Fitness": ["Resistance bands","Insulated bottle","Adjustable dumbbells","Mini massage gun","Gym gift card"],
+  "Cooking": ["Chef’s knife","Spice discovery set","Cast iron skillet","Instant-read thermometer","Pizza oven (countertop)"],
+  "Coffee": ["Milk frother","Specialty beans","Hand grinder","Pour-over kit","Espresso machine (entry)"],
+  "Outdoors": ["Rechargeable headlamp","Camp mug","Daypack 20–25L","Hammock with straps","Lightweight 2p tent"],
+  "Travel": ["Toiletry kit","Luggage scale/locks","Packing cubes","Memory foam pillow","Hardshell carry-on"],
+  "Books": ["Hardcover bestseller","eBook gift card","Book light","Page tabs kit","Library tote"],
+  "Music": ["Vinyl record","Mini BT speaker","Concert ticket credit","Over-ear headphones","Instrument accessories"],
+  "Home Decor": ["Premium candle","Throw pillow covers","Framed art print","Smart frame/display","Cozy throw"],
+  "Beauty/Skincare": ["Starter skincare set","Silk pillowcase","At-home facial device","Fragrance (50ml)","Sunscreen duo"]
+};
+
+/* ================= Boilerplate & Helpers ================= */
+const $=id=>document.getElementById(id);
+$('year').textContent=new Date().getFullYear();
+const errbar=$('errbar');
+window.addEventListener('error',e=>{errbar.textContent='Error: '+(e.message||'');errbar.style.display='block';});
+window.addEventListener('unhandledrejection',e=>{errbar.textContent='Error: '+(e.reason?.message||e.reason||'');errbar.style.display='block';});
+
+function uuid(){ return crypto?.randomUUID ? crypto.randomUUID() : 'id-'+Math.random().toString(36).slice(2)+Date.now(); }
+function load(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY))||[] }catch{return[]} }
+function save(list){ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); renderPeople(); }
+function upsert(person){ const list=load(); const i=list.findIndex(p=>p.id===person.id); if(i>=0) list[i]=person; else list.unshift(person); save(list); }
+function remove(id){ save(load().filter(p=>p.id!==id)); }
+function getSettings(){ try{ return JSON.parse(localStorage.getItem(SETTINGS_KEY))||{email:"",backendUrl:""} }catch{return {email:"",backendUrl:""} } }
+function setSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])) }
+
+function daysUntil(dateStr, recurring){
+  const d=new Date(dateStr+'T00:00:00'); if(isNaN(d)) return {days:NaN, eventDate:null};
+  const today=new Date();
+  let event=new Date(d);
+  if(recurring){
+    event.setFullYear(today.getFullYear());
+    if (event < new Date(today.toDateString())) event.setFullYear(today.getFullYear()+1);
+  }
+  const diff=Math.ceil((event - today)/(1000*60*60*24));
+  return {days:diff,eventDate:event};
+}
+function loadFired(){ try{ return new Set(JSON.parse(localStorage.getItem(REMINDERS_KEY))||[]) }catch{return new Set()} }
+function markFired(key){ const f=loadFired(); f.add(key); localStorage.setItem(REMINDERS_KEY, JSON.stringify([...f])); }
+
+const personColors = ['var(--aqua)','var(--sand)','var(--clay)','var(--terra)','var(--coral)'];
+const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+
+/* ================= PWA: SW + install prompt ================= */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+}
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault(); deferredPrompt=e; const btn=$('installBtn'); btn.style.display='inline-block';
+});
+$('installBtn').addEventListener('click', async ()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  $('installBtn').style.display='none';
+});
+
+/* ================= Settings UI ================= */
+(function hydrateSettings(){
+  const s=getSettings();
+  $('userEmail').value = s.email || '';
+  $('backendUrl').value = s.backendUrl || '';
+})();
+$('saveSettings').addEventListener('click', ()=>{
+  setSettings({ email: $('userEmail').value.trim(), backendUrl: $('backendUrl').value.trim() });
+  $('saveSettingsNote').textContent = 'Saved.';
+  setTimeout(()=> $('saveSettingsNote').textContent='', 1500);
+});
+
+/* ================= Editor Model ================= */
+let editingExisting = false;
+let current = {
+  id: uuid(),
+  name:'', age:'',
+  budget:'', interests:[], interestsFree:'',
+  location:'', address:'', notes:'',
+  occasions:[] // { id, type, dateISO, repeat: 'recurring'|'once', remOn:boolean, remDays:number, remEmailOn:boolean, remEmailDays:number }
+};
+
+function setStep(step){ // 'basic' | 'occ' | 'details'
+  $('step-basic').style.display = step==='basic'?'block':'none';
+  $('step-occ').style.display = step==='occ'?'block':'none';
+  $('step-details').style.display = step==='details'?'block':'none';
+  $('pill-basic').classList.toggle('active', step==='basic');
+  $('pill-occ').classList.toggle('active', step==='occ');
+  $('pill-details').classList.toggle('active', step==='details');
+}
+function showEditor(){ $('editorSection').style.display='block'; $('peopleSection').style.display='block'; $('personDash').style.display='none'; }
+function showDashboard(){ $('editorSection').style.display='none'; $('peopleSection').style.display='none'; $('personDash').style.display='block'; }
+
+/* ================= Step 1: Basic ================= */
+$('toOccBtn').addEventListener('click', ()=>{
+  const name=$('name').value.trim();
+  const age=Number($('age').value||0);
+  if(!name){ alert('Please enter a name.'); $('name').focus(); return; }
+  if(!age || age<1){ alert('Please enter an age (number).'); $('age').focus(); return; }
+  if(!editingExisting){
+    current = { id: uuid(), name, age, budget:'', interests:[], interestsFree:'', location:'', address:'', notes:'', occasions:[] };
+    syncChipsFromModel();
+  } else {
+    current.name = name; current.age = age;
+  }
+  setStep('occ'); renderOccasionsEdit(); renderOccasionsDetails();
+});
+$('resetBasic').addEventListener('click', ()=>{ $('name').value=''; $('age').value=''; });
+$('newPersonBtn').addEventListener('click', ()=>{
+  editingExisting=false;
+  current={ id: uuid(), name:'', age:'', budget:'', interests:[], interestsFree:'', location:'', address:'', notes:'', occasions:[] };
+  $('name').value=''; $('age').value='';
+  syncChipsFromModel();
+  setStep('basic'); renderOccasionsEdit(); renderOccasionsDetails();
+});
+
+/* ================= Step 2: Occasions ================= */
+$('addOcc').addEventListener('click', ()=>{
+  const type=$('occType').value;
+  const dateISO=$('occDate').value;
+  const repeat=$('occRepeat').value;
+  const remOn=$('occRemOn').checked;
+  const remDays=Math.max(0, Number($('occRemDays').value||0));
+  const remEmailOn=$('occRemEmailOn').checked;
+  const remEmailDays=Math.max(0, Number($('occRemEmailDays').value||0));
+  if(!dateISO){ alert('Pick a date for the occasion.'); $('occDate').focus(); return; }
+  current.occasions.push({ id: uuid(), type, dateISO, repeat, remOn, remDays, remEmailOn, remEmailDays });
+  $('occDate').value=''; $('occRemOn').checked=true; $('occRemDays').value=14; $('occRepeat').value='recurring';
+  $('occRemEmailOn').checked=false; $('occRemEmailDays').value=14;
+  renderOccasionsEdit(); renderOccasionsDetails();
+});
+$('backToBasic').addEventListener('click', ()=> setStep('basic'));
+$('toDetailsBtn').addEventListener('click', ()=> setStep('details'));
+
+/* ================= Step 3: Additional Details ================= */
+$('budget').addEventListener('input', e=> current.budget = e.target.value);
+$('interestsFree').addEventListener('input', e=> current.interestsFree = e.target.value);
+$('location').addEventListener('input', e=> current.location = e.target.value);
+$('address').addEventListener('input', e=> current.address = e.target.value);
+$('notes').addEventListener('input', e=> current.notes = e.target.value);
+
+/* Build interest chips */
+const chipsEl = $('interestChips');
+const chipState = new Set();
+INTEREST_PRESETS.forEach(lbl=>{
+  const b=document.createElement('button');
+  b.type='button'; b.className='chip'; b.textContent=lbl;
+  b.addEventListener('click', ()=>{
+    const on=b.classList.toggle('active');
+    if(on) chipState.add(lbl); else chipState.delete(lbl);
+    current.interests = Array.from(chipState);
+  });
+  chipsEl.appendChild(b);
+});
+function syncChipsFromModel(){
+  chipState.clear(); chipsEl.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  (current.interests||[]).forEach(lbl=>{
+    chipState.add(lbl);
+    const btn=[...chipsEl.children].find(n=>n.textContent===lbl); if(btn) btn.classList.add('active');
+  });
+}
+
+$('backToOcc').addEventListener('click', ()=> setStep('occ'));
+
+$('savePerson').addEventListener('click', ()=>{
+  // Address required now
+  if(!current.address || !current.address.trim()){
+    setStep('details');
+    $('address').focus();
+    alert('Please enter an address (required).');
+    return;
+  }
+  // merge free-text interests
+  const extras = ($('interestsFree').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  current.interests = Array.from(new Set([...(current.interests||[]), ...extras]));
+  upsert(current);
+
+  // schedule local + prepare email webhooks for this person
+  if ('Notification' in window && Notification.permission==='granted') scheduleAllRemindersFor(current);
+  prepareEmailWebhooks(current);
+
+  // reset editor
+  editingExisting=false;
+  current={ id: uuid(), name:'', age:'', budget:'', interests:[], interestsFree:'', location:'', address:'', notes:'', occasions:[] };
+  $('name').value=''; $('age').value=''; $('budget').value=''; $('interestsFree').value='';
+  $('location').value=''; $('address').value=''; $('notes').value='';
+  syncChipsFromModel();
+  renderOccasionsEdit(); renderOccasionsDetails();
+  $('deletePerson').style.display='none';
+  setStep('basic');
+  scrollTo({top:0,behavior:'smooth'});
+});
+
+$('deletePerson').addEventListener('click', ()=>{
+  if(confirm('Delete this person?')){
+    remove(current.id);
+    editingExisting=false;
+    current={ id: uuid(), name:'', age:'', budget:'', interests:[], interestsFree:'', location:'', address:'', notes:'', occasions:[] };
+    setStep('basic'); renderOccasionsEdit(); renderOccasionsDetails();
+    syncChipsFromModel();
+  }
+});
+
+/* ================= Occasions renders ================= */
+function renderOccasionsEdit(){
+  const box=$('occList');
+  box.innerHTML='';
+  if(!current.occasions.length){ box.innerHTML='<div class="empty">No occasions yet. Add one above.</div>'; return; }
+  const head=document.createElement('div'); head.className='row'; head.style.fontWeight='700';
+  head.innerHTML='<div>Occasion</div><div>Date</div><div>In</div><div>Actions</div>'; box.appendChild(head);
+
+  const sorted=[...current.occasions].sort((a,b)=> (new Date(a.dateISO)) - (new Date(b.dateISO)));
+  sorted.forEach(o=>{
+    const {days,eventDate}=daysUntil(o.dateISO, o.repeat==='recurring');
+    const row=document.createElement('div'); row.className='row';
+    row.innerHTML=`
+      <div>
+        <div>${escapeHtml(o.type)}</div>
+        <div class="badge" style="margin-top:.25rem;">${o.repeat==='recurring'?'Recurring yearly':'One-time'}</div>
+        ${o.remOn? `<div class="badge" style="margin-top:.25rem;background:#e6fcff;border-color:#b8f5ff;color:#06455b;">Local: ${o.remDays}d before</div>` : '' }
+        ${o.remEmailOn? `<div class="badge" style="margin-top:.25rem;background:#eaffea;border-color:#baf5ba;color:#165016;">Email: ${o.remEmailDays}d before</div>` : '' }
+      </div>
+      <div>${eventDate?eventDate.toLocaleDateString():'—'}</div>
+      <div>${isNaN(days)?'—':days+' days'}</div>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+        <button class="btn-secondary btn-mini" onclick='editOcc("${o.id}")'>Edit</button>
+        <a class="btn-secondary btn-mini" href="${buildICSDataURI(current, o)}" download="${safeFile(`${current.name}-${o.type}.ics`)}">.ics</a>
+        <button class="btn-danger btn-mini" onclick='delOcc("${o.id}")'>Delete</button>
+      </div>
+    `;
+    box.appendChild(row);
+  });
+
+  const exists = load().some(p=>p.id===current.id);
+  $('deletePerson').style.display = exists ? 'inline-block' : 'none';
+}
+function renderOccasionsDetails(){
+  const box=$('occListDetails');
+  box.innerHTML='';
+  if(!current.occasions.length){ box.innerHTML='<div class="empty">No occasions yet.</div>'; return; }
+  const head=document.createElement('div'); head.className='row'; head.style.fontWeight='700';
+  head.innerHTML='<div>Occasion</div><div>Date</div><div>Reminder</div><div>Actions</div>'; box.appendChild(head);
+
+  current.occasions.forEach(o=>{
+    const {eventDate}=daysUntil(o.dateISO, o.repeat==='recurring');
+    const remTxt = [
+      o.remOn ? `Local ${o.remDays}d` : null,
+      o.remEmailOn ? `Email ${o.remEmailDays}d` : null
+    ].filter(Boolean).join(' • ') || 'Off';
+    const row=document.createElement('div'); row.className='row';
+    row.innerHTML=`
+      <div>${escapeHtml(o.type)} <span class="badge" style="margin-left:.5rem;">${o.repeat==='recurring'?'Recurring':'One-time'}</span></div>
+      <div>${eventDate?eventDate.toLocaleDateString():'—'}</div>
+      <div>${remTxt}</div>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+        <button class="btn-secondary btn-mini" onclick='editOcc("${o.id}")'>Edit</button>
+        <a class="btn-secondary btn-mini" href="${buildICSDataURI(current, o)}" download="${safeFile(`${current.name}-${o.type}.ics`)}">.ics</a>
+        <button class="btn-danger btn-mini" onclick='delOcc("${o.id}")'>Delete</button>
+      </div>
+    `;
+    box.appendChild(row);
+  });
+}
+
+window.editOcc = function(occId){
+  const occ=current.occasions.find(o=>o.id===occId); if(!occ) return;
+  $('occType').value=occ.type; $('occDate').value=occ.dateISO;
+  $('occRepeat').value=occ.repeat||'recurring';
+  $('occRemOn').checked=!!occ.remOn;
+  $('occRemDays').value=occ.remDays ?? 14;
+  $('occRemEmailOn').checked=!!occ.remEmailOn;
+  $('occRemEmailDays').value=occ.remEmailDays ?? 14;
+  current.occasions = current.occasions.filter(o=>o.id!==occId);
+  setStep('occ'); renderOccasionsEdit(); renderOccasionsDetails();
+};
+window.delOcc = function(occId){
+  current.occasions = current.occasions.filter(o=>o.id!==occId);
+  renderOccasionsEdit(); renderOccasionsDetails();
+};
+
+/* ================= People list ================= */
+function renderPeople(){
+  const listEl=$('peopleList');
+  const list=load();
+  if(!list.length){ listEl.innerHTML='<div class="empty">No people yet. Use “Add / Edit Person” above to start.</div>'; return; }
+
+  list.sort((a,b)=>{
+    const na=nextDays(a), nb=nextDays(b);
+    if(na===nb) return a.name.localeCompare(b.name);
+    if(isNaN(na)) return 1; if(isNaN(nb)) return -1;
+    return na-nb;
+  });
+
+  listEl.innerHTML='';
+  const head=document.createElement('div'); head.className='row'; head.style.fontWeight='700';
+  head.innerHTML='<div>Name</div><div>Age</div><div>Next In</div><div>Actions</div>'; listEl.appendChild(head);
+
+  list.forEach((p,idx)=>{
+    const next=nextDays(p);
+    const color = personColors[idx % personColors.length];
+    const row=document.createElement('div'); row.className='row';
+    row.innerHTML=`
+      <div>
+        <span class="badge"><span class="dot" style="background:${color}"></span>${escapeHtml(p.name)}</span>
+        <span class="badge" style="margin-left:.5rem;background:var(--aqua);"> ${p.occasions.length} occasion${p.occasions.length===1?'':'s'}</span>
+      </div>
+      <div>${p.age||'—'}</div>
+      <div>${isNaN(next)?'—':next+' days'}</div>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+        <button class="btn-secondary" onclick='openEditor("${p.id}")'>Edit</button>
+        <button class="btn-primary" onclick='openDashboard("${p.id}")'>Open</button>
+        <button class="btn-danger" onclick='removePerson("${p.id}")'>Delete</button>
+      </div>
+    `;
+    listEl.appendChild(row);
+  });
+}
+function nextDays(person){
+  if(!person.occasions?.length) return NaN;
+  const diffs = person.occasions.map(o=>{
+    const {days}=daysUntil(o.dateISO, o.repeat==='recurring');
+    return isNaN(days) ? Infinity : days;
+  }).filter(d=>d!==Infinity);
+  return diffs.length? Math.min(...diffs) : NaN;
+}
+
+window.openEditor = function(id){
+  const p = load().find(x=>x.id===id); if(!p) return;
+  editingExisting = true;
+  current = JSON.parse(JSON.stringify(p));
+  $('name').value=current.name; $('age').value=current.age;
+  $('budget').value=current.budget||''; $('interestsFree').value=current.interestsFree||'';
+  $('location').value=current.location||''; $('address').value=current.address||'';
+  $('notes').value=current.notes||'';
+  syncChipsFromModel();
+  setStep('details'); renderOccasionsEdit(); renderOccasionsDetails();
+  showEditor();
+  scrollTo({top:0,behavior:'smooth'});
+};
+
+/* ================= Dashboard view ================= */
+window.openDashboard = function(id){
+  const p = load().find(x=>x.id===id); if(!p) return;
+  renderDashboard(p);
+  showDashboard();
+  scrollTo({top:0,behavior:'smooth'});
+};
+
+$('dashBackBtn').addEventListener('click', ()=>{ showEditor(); });
+$('dashEditBtn').addEventListener('click', ()=>{
+  const p = JSON.parse(sessionStorage.getItem('giftgenie:lastdash')||'null');
+  if(!p) { showEditor(); return; }
+  openEditor(p.id);
+});
+$('dashDeleteBtn').addEventListener('click', ()=>{
+  const p = JSON.parse(sessionStorage.getItem('giftgenie:lastdash')||'null');
+  if(!p) return;
+  if(confirm('Delete this person?')){ remove(p.id); showEditor(); }
+});
+
+function renderDashboard(person){
+  sessionStorage.setItem('giftgenie:lastdash', JSON.stringify(person));
+  $('dashHeader').textContent = `${person.name} — Dashboard`;
+
+  // Person info
+  const info = [
+    ['Age', person.age||'—'],
+    ['Budget', person.budget ? `$${person.budget}` : '—'],
+    ['Interests', (person.interests||[]).concat((person.interestsFree||'').split(',').map(s=>s.trim()).filter(Boolean)).join(', ') || '—'],
+    ['Location', person.location||'—'],
+    ['Address', person.address||'—'],
+    ['Notes', person.notes||'—'],
+  ];
+  const infoEl = $('dashInfo'); infoEl.innerHTML='';
+  info.forEach(([k,v])=>{
+    const row=document.createElement('div'); row.className='row';
+    row.innerHTML = `<div style="font-weight:700">${k}</div><div style="grid-column: span 3">${escapeHtml(String(v))}</div>`;
+    infoEl.appendChild(row);
+  });
+
+  // Occasions list
+  const occEl = $('dashOcc'); occEl.innerHTML='';
+  if(!person.occasions?.length){
+    occEl.innerHTML = '<div class="empty">No occasions yet.</div>';
+  } else {
+    const head=document.createElement('div'); head.className='row'; head.style.fontWeight='700';
+    head.innerHTML='<div>Occasion</div><div>Date</div><div>Reminder</div><div>Actions</div>'; occEl.appendChild(head);
+    person.occasions.forEach(o=>{
+      const {eventDate}=daysUntil(o.dateISO, o.repeat==='recurring');
+      const remTxt = [
+        o.remOn ? `Local ${o.remDays}d` : null,
+        o.remEmailOn ? `Email ${o.remEmailDays}d` : null
+      ].filter(Boolean).join(' • ') || 'Off';
+      const row=document.createElement('div'); row.className='row';
+      row.innerHTML=`
+        <div>${escapeHtml(o.type)} <span class="badge" style="margin-left:.5rem;">${o.repeat==='recurring'?'Recurring':'One-time'}</span></div>
+        <div>${eventDate?eventDate.toLocaleDateString():'—'}</div>
+        <div>${remTxt}</div>
+        <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+          <a class="btn-secondary btn-mini" href="${buildICSDataURI(person, o)}" download="${safeFile(`${person.name}-${o.type}.ics`)}">.ics</a>
+        </div>
+      `;
+      occEl.appendChild(row);
+    });
+  }
+
+  // Next upcoming + sample ideas
+  const next = nextUpcomingOccasion(person);
+  const nextText = next ? `${person.name}'s next occasion: ${next.type} on ${next.when.toLocaleDateString()} (in ${next.inDays} days)` : 'No upcoming occasion found.';
+  $('dashNextOcc').textContent = nextText;
+
+  const sampleBox = $('sampleIdeas'); sampleBox.innerHTML='';
+  const interests = (person.interests||[]).slice(0,2); // show up to 2 categories
+  if (!interests.length){
+    sampleBox.innerHTML = '<div class="empty">Add interests to see sample ideas.</div>';
+  } else {
+    interests.forEach(cat=>{
+      const ideas = SAMPLE_IDEAS[cat]||[];
+      const block=document.createElement('div'); block.style.marginBottom='.75rem';
+      block.innerHTML = `<div style="font-weight:700;margin-bottom:.25rem;">${escapeHtml(cat)}</div>
+        <ul style="margin-left:1rem;">
+          ${ideas.slice(0,5).map(i=>`<li>${escapeHtml(i)}</li>`).join('')}
+        </ul>`;
+      sampleBox.appendChild(block);
+    });
+  }
+}
+
+function nextUpcomingOccasion(person){
+  if(!person.occasions?.length) return null;
+  const today=new Date();
+  const candidates = person.occasions.map(o=>{
+    const {days,eventDate}=daysUntil(o.dateISO, o.repeat==='recurring');
+    return (isNaN(days) || days<0) ? null : {type:o.type, when:eventDate, inDays:days, occ:o};
+  }).filter(Boolean);
+  if(!candidates.length) return null;
+  candidates.sort((a,b)=>a.when-b.when);
+  return candidates[0];
+}
+
+/* Delete from list or dashboard */
+window.removePerson = function(id){
+  if(confirm('Delete this person?')){
+    remove(id);
+    const dash = JSON.parse(sessionStorage.getItem('giftgenie:lastdash')||'null');
+    if(dash?.id===id) showEditor();
+  }
+};
+
+/* ================= Notifications (local) & .ics ================= */
+async function ensureNotificationPermission(){
+  if(!('Notification' in window)) return 'denied';
+  if(Notification.permission==='granted') return 'granted';
+  if(Notification.permission==='denied') return 'denied';
+  const res = await Notification.requestPermission(); return res;
+}
+function scheduleAllRemindersFor(person){
+  if (!('Notification' in window) || Notification.permission!=='granted') return;
+  person.occasions.forEach(o=>{
+    if(!o.remOn) return;
+    const {eventDate}=daysUntil(o.dateISO, o.repeat==='recurring');
+    if(!eventDate) return;
+    const remindAt = new Date(eventDate);
+    remindAt.setDate(remindAt.getDate() - (Number(o.remDays)||0));
+    const key = `${person.id}:${o.id}:${remindAt.toISOString().slice(0,10)}`;
+    const fired = loadFired(); if (fired.has(key)) return;
+    const ms = remindAt - new Date(); if (ms<=0) return;
+    setTimeout(()=>triggerReminder(person,o,key), Math.min(ms, 2147483647));
+  });
+}
+setInterval(()=>{
+  const now=new Date();
+  const fired=loadFired();
+  load().forEach(p=>{
+    p.occasions.forEach(o=>{
+      if(!o.remOn) return;
+      const {eventDate}=daysUntil(o.dateISO, o.repeat==='recurring'); if(!eventDate) return;
+      const remindAt = new Date(eventDate); remindAt.setDate(remindAt.getDate() - (Number(o.remDays)||0));
+      const key = `${p.id}:${o.id}:${remindAt.toISOString().slice(0,10)}`;
+      if(!fired.has(key)){
+        const diff = remindAt - now;
+        if(diff<=0 && diff>-3600000) triggerReminder(p,o,key);
+      }
+    });
+  });
+}, 1800000);
+
+function triggerReminder(p,o,key){
+  try{
+    new Notification("GiftGenie — Reminder", { body: `${p.name}'s ${o.type} is coming up.`, });
+    markFired(key);
+  }catch{}
+}
+
+function pad(n){ return (n<10?'0':'')+n }
+function toICSDate(d){ return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+'00Z' }
+function buildICSDataURI(person, occ){
+  const recur = occ.repeat==='recurring';
+  const base = new Date(occ.dateISO+'T00:00:00');
+  const year = (recur ? new Date().getFullYear() : base.getFullYear());
+  const start=new Date(Date.UTC(year, base.getMonth(), base.getDate(), 9, 0));
+  const end=new Date(start.getTime()+3600000);
+  const lines = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//GiftGenie//EN',
+    'BEGIN:VEVENT',
+    `UID:${person.id}-${occ.id}@giftgenie.local`,
+    `DTSTAMP:${toICSDate(new Date())}`,
+    `DTSTART:${toICSDate(start)}`,
+    `DTEND:${toICSDate(end)}`,
+    `SUMMARY:${escapeICS(`${person.name} — ${occ.type}`)}`,
+    `DESCRIPTION:${escapeICS(`Budget ~$${person.budget||'-'}. Interests: ${(person.interests||[]).join(', ')||'-'}. Address: ${person.address||person.location||'-'}.`)}`,
+    ...(recur ? ['RRULE:FREQ=YEARLY'] : []),
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  return 'data:text/calendar;charset=utf8,'+encodeURIComponent(lines);
+}
+function safeFile(s){ return s.replace(/[^a-z0-9\-]+/gi,'_') }
+function escapeICS(s){ return (s||'').replace(/([,;])/g,'\\$1').replace(/\n/g,'\\n') }
+
+/* ================= Email automation (backend placeholder) =================
+   This prepares POST payloads for each email-enabled occasion. You just need
+   a backend endpoint that accepts JSON and sends the email (e.g. SendGrid).
+   Until configured, this won’t send real emails (no third-party calls here).
+*/
+function prepareEmailWebhooks(person){
+  const {email, backendUrl} = getSettings();
+  if (!backendUrl || !email) return; // not configured yet
+  person.occasions.forEach(o=>{
+    if(!o.remEmailOn) return;
+    const {eventDate}=daysUntil(o.dateISO, o.repeat==='recurring'); if(!eventDate) return;
+    const sendAt=new Date(eventDate); sendAt.setDate(sendAt.getDate() - (Number(o.remEmailDays)||0));
+    if (sendAt < new Date()) return;
+
+    const payload = {
+      to: email,
+      subject: `Reminder: ${person.name}'s ${o.type} is coming up`,
+      body: `${person.name}'s ${o.type} is on ${eventDate.toDateString()}.
+Budget: $${person.budget||'-'}
+Interests: ${(person.interests||[]).join(', ')||'-'}
+Address: ${person.address||person.location||'-'}
+
+(You set this reminder for ${o.remEmailDays} days before.)`,
+      metadata: {
+        personId: person.id, occId: o.id, sendAt: sendAt.toISOString(), repeat: o.repeat
+      }
+    };
+
+    // Fire-and-forget enqueue to your backend (implement cron/queue there)
+    fetch(backendUrl, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+      .catch(()=>{/* ignore in UI */});
+  });
+}
+
+/* ================= Init ================= */
+(async function init(){
+  renderPeople();
+  renderOccasionsEdit();
+  renderOccasionsDetails();
+  setStep('basic');
+  showEditor();
+
+  if (isSecure && 'Notification' in window && Notification.permission==='default'){
+    try { await ensureNotificationPermission(); } catch {}
+  }
+  if ('Notification' in window && Notification.permission==='granted'){
+    load().forEach(scheduleAllRemindersFor);
+  }
+})();
+</script>
+
+<!-- minimal iOS support -->
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+</body>
+</html>
